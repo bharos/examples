@@ -42,9 +42,11 @@ public class MemDb implements DbOperations {
   public void put(String key, String val) {
     // If there is an ongoing transaction, put key,val to that transaction
     // Else put key,val to the db itself.
+
+    String currentValue = get(key);
     if (transactions.size() > 0) {
       Transaction transaction = transactions.getFirst();
-      transaction.put(key, val);
+      transaction.put(key, val, currentValue);
     } else {
       db.put (key, val);
       countMap.put (val, countMap.getOrDefault(val, 0) + 1);
@@ -53,22 +55,24 @@ public class MemDb implements DbOperations {
 
   @Override
   public void delete(String key) {
+    String currentValue = get(key);
     if (transactions.size() > 0) {
       Transaction transaction = transactions.getFirst();
-      transaction.delete(key);
+      transaction.delete(key, currentValue);
     } else {
       db.remove(key);
     }
   }
 
   @Override
-  public void count(String val) {
-//      int sum = countMap.getOrDefault(val, 0);
-//    Iterator<Transaction> iterator = transactions.iterator();
-//    while (iterator.hasNext()) {
-//      Transaction transaction = iterator.next();
-//      sum += transaction.countMap.getOrDefault(val, 0);
-//    }
+  public int count(String val) {
+      int sum = countMap.getOrDefault(val, 0);
+    Iterator<Transaction> iterator = transactions.iterator();
+    while (iterator.hasNext()) {
+      Transaction transaction = iterator.next();
+      sum += transaction.getCountMap().getOrDefault(val, 0);
+    }
+    return sum;
   }
 
   @Override

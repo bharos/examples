@@ -24,18 +24,24 @@ public class Transaction {
 
     return transactionMap.getOrDefault(key, null);
   }
-  void put(String key, String val) {
-    transactionMap.put(key, val);
-    countMap.put(val, countMap.getOrDefault(val, 0)+1);
+  void put(String key, String newVal, String currentVal) {
+    transactionMap.put(key, newVal);
+    if (currentVal != null) {
+      decrementCount(currentVal);
+    }
+    incrementCount(newVal);
 
     // If this key was previously marked as deleted, remove it
     if (deleted.contains(key)) {
       deleted.remove(key);
     }
   }
-  void delete(String key) {
+  void delete(String key, String currentVal) {
     // If transaction contains key, remove it and reduce count
     // else add it in deleted set to remove it from memDB while commit
+    if (currentVal != null) {
+      decrementCount(currentVal);
+    }
     if (transactionMap.containsKey(key)) {
     String val = transactionMap.remove(key);
     if (countMap.containsKey(val)) {
@@ -50,6 +56,19 @@ public class Transaction {
       deleted.add(key);
     }
   }
+
+  private void incrementCount(String val) {
+    int currentCount = countMap.getOrDefault(val, 0);
+    currentCount++;
+    countMap.put(val, currentCount);
+  }
+
+  private void decrementCount(String val) {
+    int currentCount = countMap.getOrDefault(val, 0);
+    --currentCount;
+    countMap.put(val, currentCount);
+  }
+
   public Map<String, Integer> getCountMap() {
     return countMap;
   }
